@@ -300,7 +300,7 @@ class ImageTest(unittest.TestCase):
             # https://bazel-review.googlesource.com/c/bazel/+/48211
             # Assume that any value for 'created' within a reasonable bound is fine.
             self.assertLessEqual(now - created, datetime.timedelta(minutes=15))
-    
+
     def test_with_base_stamped_image(self):
         # {BUILD_TIMESTAMP} should be the default when `stamp = True` is configured
         # in the base image and `creation_time` isn't explicitly defined.
@@ -883,7 +883,9 @@ class ImageTest(unittest.TestCase):
                 './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/internal',
                 './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/internal/linker',
                 './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/internal/linker/index.js',
-                './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/internal/linker/runfiles_helper.js',
+                './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/internal/runfiles',
+                './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/internal/runfiles/index.js',
+                './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/internal/runfiles/runfile_helper_main.js',
                 './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/internal/node',
                 './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/internal/node/node_patches.js',
                 './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/internal/coverage',
@@ -918,6 +920,7 @@ class ImageTest(unittest.TestCase):
                 './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/third_party/github.com/source-map/lib/util.js',
                 './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/third_party/github.com/source-map-support',
                 './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/third_party/github.com/source-map-support/package.json',
+                './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/third_party/github.com/source-map-support/register.js',
                 './app/testdata/nodejs_image_binary.runfiles/build_bazel_rules_nodejs/third_party/github.com/source-map-support/source-map-support.js',
                 './app/testdata/nodejs_image_binary.runfiles/io_bazel_rules_docker/testdata/nodejs_image_lib.js',
                 './app/testdata/nodejs_image_binary.runfiles/io_bazel_rules_docker/testdata/nodejs_image_lib.d.ts',

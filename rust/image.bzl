@@ -16,7 +16,7 @@
 The signature of this rule is compatible with rust_binary.
 """
 
-load("@rules_rust//rust:rust.bzl", "rust_binary")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
 load(
     "//cc:image.bzl",
     "DEFAULT_BASE",
@@ -54,12 +54,12 @@ def rust_image(name, base = None, deps = [], layers = [], binary = None, **kwarg
         fail("kwarg does nothing when binary is specified", "deps")
 
     base = base or DEFAULT_BASE
+    tags = kwargs.get("tags", None)
     for index, dep in enumerate(layers):
-        base = app_layer(name = "%s_%d" % (name, index), base = base, dep = dep)
-        base = app_layer(name = "%s_%d-symlinks" % (name, index), base = base, dep = dep, binary = binary)
+        base = app_layer(name = "%s_%d" % (name, index), base = base, dep = dep, tags = tags)
+        base = app_layer(name = "%s_%d-symlinks" % (name, index), base = base, dep = dep, binary = binary, tags = tags)
 
     visibility = kwargs.get("visibility", None)
-    tags = kwargs.get("tags", None)
     app_layer(
         name = name,
         base = base,

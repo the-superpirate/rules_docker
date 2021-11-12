@@ -201,7 +201,7 @@ def _jar_app_layer_impl(ctx):
         "/usr/bin/java",
         "-cp",
         # Support optionally passing the classpath as a file.
-        "@" + classpath_path if ctx.attr._classpath_as_file else classpath,
+        "@" + classpath_path if ctx.attr.classpath_as_file else classpath,
     ] + jvm_flags + ([ctx.attr.main_class] + args if ctx.attr.main_class != "" else [])
 
     file_map = {
@@ -230,6 +230,8 @@ jar_app_layer = rule(
         # https://github.com/bazelbuild/bazel/issues/2176
         "data_path": attr.string(default = "."),
 
+        # The rest of the dependencies.
+        "deps": attr.label_list(),
         # Override the defaults.
         "directory": attr.string(default = "/app"),
         # The full list of dependencies that have their own layers
@@ -239,13 +241,11 @@ jar_app_layer = rule(
         "legacy_run_behavior": attr.bool(default = False),
         # The main class to invoke on startup.
         "main_class": attr.string(mandatory = False),
-        "workdir": attr.string(default = ""),
         "runtime_deps": attr.label_list(),
-        # The rest of the dependencies.
-        "deps": attr.label_list(),
+        "workdir": attr.string(default = ""),
 
         # Whether the classpath should be passed as a file.
-        "_classpath_as_file": attr.bool(default = False),
+        "classpath_as_file": attr.bool(default = False),
         "_jdk": attr.label(
             default = Label("@bazel_tools//tools/jdk:current_java_runtime"),
             providers = [java_common.JavaRuntimeInfo],
@@ -265,6 +265,7 @@ def java_image(
         runtime_deps = [],
         layers = [],
         jvm_flags = [],
+        classpath_as_file = None,
         **kwargs):
     """Builds a container image overlaying the java_binary.
 
@@ -327,6 +328,7 @@ def java_image(
         args = kwargs.get("args"),
         data = kwargs.get("data"),
         testonly = kwargs.get("testonly"),
+        classpath_as_file = classpath_as_file,
     )
 
 def _war_dep_layer_impl(ctx):
@@ -420,13 +422,13 @@ def war_image(name, base = None, deps = [], layers = [], **kwargs):
     native.java_library(name = library_name, deps = deps + layers, **kwargs)
 
     base = base or DEFAULT_JETTY_BASE
+    tags = kwargs.get("tags", None)
     for index, dep in enumerate(layers):
         this_name = "%s.%d" % (name, index)
-        _war_dep_layer(name = this_name, base = base, dep = dep)
+        _war_dep_layer(name = this_name, base = base, dep = dep, tags = tags)
         base = this_name
 
     visibility = kwargs.get("visibility", None)
-    tags = kwargs.get("tags", None)
     _war_app_layer(
         name = name,
         base = base,
