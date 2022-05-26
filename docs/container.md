@@ -1,3 +1,5 @@
+<!-- Generated with Stardoc, Do Not Edit! -->
+
 
 Generated API documentation for rules that manipulating containers.
 
@@ -14,6 +16,14 @@ container_bundle(<a href="#container_bundle-name">name</a>, <a href="#container_
 
 A rule that aliases and saves N images into a single `docker save` tarball.
 
+This can be consumed in 2 different ways:
+
+  - The output tarball could be used for `docker load` to load all images to docker daemon.
+
+  - The emitted BundleInfo provider could be consumed by contrib/push-all.bzl rules to
+    create an executable target which tag and push multiple images to a container registry.
+
+
 **ATTRIBUTES**
 
 
@@ -26,7 +36,7 @@ A rule that aliases and saves N images into a single `docker save` tarball.
 | <a id="container_bundle-image_targets"></a>image_targets |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a> | optional | [] |
 | <a id="container_bundle-images"></a>images |  -   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | optional | {} |
 | <a id="container_bundle-incremental_load_template"></a>incremental_load_template |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | //container:incremental_load_template |
-| <a id="container_bundle-stamp"></a>stamp |  -   | Boolean | optional | False |
+| <a id="container_bundle-stamp"></a>stamp |  Whether to encode build information into the output. Possible values:<br><br>    - <code>@io_bazel_rules_docker//stamp:always</code>:         Always stamp the build information into the output, even in [--nostamp][stamp] builds.         This setting should be avoided, since it potentially causes cache misses remote caching for         any downstream actions that depend on it.<br><br>    - <code>@io_bazel_rules_docker//stamp:never</code>:         Always replace build information by constant values. This gives good build result caching.<br><br>    - <code>@io_bazel_rules_docker//stamp:use_stamp_flag</code>:         Embedding of build information is controlled by the [--[no]stamp][stamp] flag.         Stamped binaries are not rebuilt unless their dependencies change.<br><br>    [stamp]: https://docs.bazel.build/versions/main/user-manual.html#flag--stamp   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | @io_bazel_rules_docker//stamp:use_stamp_flag |
 | <a id="container_bundle-tar_output"></a>tar_output |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional |  |
 
 
@@ -77,7 +87,7 @@ A rule that imports a docker image into our intermediate form.
 | <a id="container_import-layers"></a>layers |  The list of layer .tar.gz files in the order they appear in the config.json's layer section,             or in the order that they appear in the <code>Layers</code> field of the docker save tarballs'             <code>manifest.json</code> (these may or may not be gzipped).<br><br>            Note that the layers should each have a different basename.   | <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a> | required |  |
 | <a id="container_import-manifest"></a>manifest |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="container_import-repository"></a>repository |  -   | String | optional | "bazel" |
-| <a id="container_import-sha256"></a>sha256 |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | //tools/build_defs/hash:sha256 |
+| <a id="container_import-sha256"></a>sha256 |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | //container/go/cmd/sha256:sha256 |
 
 
 <a id="#container_layer"></a>
@@ -108,7 +118,7 @@ A rule that assembles data into a tarball which can be use as in layers attr in 
 | <a id="container_layer-empty_dirs"></a>empty_dirs |  -   | List of strings | optional | [] |
 | <a id="container_layer-empty_files"></a>empty_files |  -   | List of strings | optional | [] |
 | <a id="container_layer-enable_mtime_preservation"></a>enable_mtime_preservation |  -   | Boolean | optional | False |
-| <a id="container_layer-env"></a>env |  Dictionary from environment variable names to their values when running the Docker image.<br><br>        See https://docs.docker.com/engine/reference/builder/#env<br><br>        For example,<br><br>            env = {                 "FOO": "bar",                 ...             }, <br><br>        The values of this field support make variables (e.g., <code>$(FOO)</code>)         and stamp variables; keys support make variables as well.   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | optional | {} |
+| <a id="container_layer-env"></a>env |  Dictionary from environment variable names to their values when running the Docker image.<br><br>        See https://docs.docker.com/engine/reference/builder/#env<br><br>        For example,<br><br>            env = {                 "FOO": "bar",                 ...             },<br><br>        The values of this field support make variables (e.g., <code>$(FOO)</code>)         and stamp variables; keys support make variables as well.   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | optional | {} |
 | <a id="container_layer-extract_config"></a>extract_config |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | //container/go/cmd/extract_config:extract_config |
 | <a id="container_layer-files"></a>files |  File to add to the layer.<br><br>        A list of files that should be included in the Docker image.   | <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a> | optional | [] |
 | <a id="container_layer-incremental_load_template"></a>incremental_load_template |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | //container:incremental_load_template |
@@ -116,7 +126,7 @@ A rule that assembles data into a tarball which can be use as in layers attr in 
 | <a id="container_layer-mtime"></a>mtime |  -   | Integer | optional | -1 |
 | <a id="container_layer-operating_system"></a>operating_system |  -   | String | optional | "linux" |
 | <a id="container_layer-portable_mtime"></a>portable_mtime |  -   | Boolean | optional | False |
-| <a id="container_layer-sha256"></a>sha256 |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | //tools/build_defs/hash:sha256 |
+| <a id="container_layer-sha256"></a>sha256 |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | //container/go/cmd/sha256:sha256 |
 | <a id="container_layer-symlinks"></a>symlinks |  Symlinks to create in the Docker image.<br><br>        For example,<br><br>            symlinks = {                 "/path/to/link": "/path/to/target",                 ...             },   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | optional | {} |
 | <a id="container_layer-tars"></a>tars |  Tar file to extract in the layer.<br><br>        A list of tar files whose content should be in the Docker image.   | <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a> | optional | [] |
 
@@ -150,9 +160,10 @@ The created target can be referenced as `@label_name//image`.
 ## container_pull
 
 <pre>
-container_pull(<a href="#container_pull-name">name</a>, <a href="#container_pull-architecture">architecture</a>, <a href="#container_pull-cpu_variant">cpu_variant</a>, <a href="#container_pull-digest">digest</a>, <a href="#container_pull-docker_client_config">docker_client_config</a>, <a href="#container_pull-import_tags">import_tags</a>, <a href="#container_pull-os">os</a>,
-               <a href="#container_pull-os_features">os_features</a>, <a href="#container_pull-os_version">os_version</a>, <a href="#container_pull-platform_features">platform_features</a>, <a href="#container_pull-puller_darwin">puller_darwin</a>, <a href="#container_pull-puller_linux_amd64">puller_linux_amd64</a>,
-               <a href="#container_pull-puller_linux_arm64">puller_linux_arm64</a>, <a href="#container_pull-puller_linux_s390x">puller_linux_s390x</a>, <a href="#container_pull-registry">registry</a>, <a href="#container_pull-repo_mapping">repo_mapping</a>, <a href="#container_pull-repository">repository</a>, <a href="#container_pull-tag">tag</a>)
+container_pull(<a href="#container_pull-name">name</a>, <a href="#container_pull-architecture">architecture</a>, <a href="#container_pull-cpu_variant">cpu_variant</a>, <a href="#container_pull-cred_helpers">cred_helpers</a>, <a href="#container_pull-digest">digest</a>, <a href="#container_pull-docker_client_config">docker_client_config</a>,
+               <a href="#container_pull-import_tags">import_tags</a>, <a href="#container_pull-os">os</a>, <a href="#container_pull-os_features">os_features</a>, <a href="#container_pull-os_version">os_version</a>, <a href="#container_pull-platform_features">platform_features</a>, <a href="#container_pull-puller_darwin">puller_darwin</a>,
+               <a href="#container_pull-puller_linux_amd64">puller_linux_amd64</a>, <a href="#container_pull-puller_linux_arm64">puller_linux_arm64</a>, <a href="#container_pull-puller_linux_s390x">puller_linux_s390x</a>, <a href="#container_pull-registry">registry</a>, <a href="#container_pull-repo_mapping">repo_mapping</a>,
+               <a href="#container_pull-repository">repository</a>, <a href="#container_pull-tag">tag</a>, <a href="#container_pull-timeout">timeout</a>)
 </pre>
 
 A repository rule that pulls down a Docker base image in a manner suitable for use with the `base` attribute of `container_image`.
@@ -165,7 +176,7 @@ construct new images.
 NOTE: `container_pull` now supports authentication using custom docker client configuration.
 See [here](https://github.com/bazelbuild/rules_docker#container_pull-custom-client-configuration) for details.
 
-NOTE: Set `PULLER_TIMEOUT` env variable to change the default 600s timeout.
+NOTE: Set `PULLER_TIMEOUT` env variable to change the default 600s timeout for all container_pull targets.
 
 NOTE: Set `DOCKER_REPO_CACHE` env variable to make the container puller cache downloaded layers at the directory specified as a value to this env variable.
 The caching feature hasn't been thoroughly tested and may be thread unsafe.
@@ -185,8 +196,9 @@ please use the bazel startup flag `--loading_phase_threads=1` in your bazel invo
 | <a id="container_pull-name"></a>name |  A unique name for this repository.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
 | <a id="container_pull-architecture"></a>architecture |  Which CPU architecture to pull if this image refers to a multi-platform manifest list, default 'amd64'.   | String | optional | "amd64" |
 | <a id="container_pull-cpu_variant"></a>cpu_variant |  Which CPU variant to pull if this image refers to a multi-platform manifest list.   | String | optional | "" |
+| <a id="container_pull-cred_helpers"></a>cred_helpers |  Labels to a list of credential helper binaries that are configured in <code>docker_client_config</code>.<br><br>        More about credential helpers: https://docs.docker.com/engine/reference/commandline/login/#credential-helpers   | <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a> | optional | [] |
 | <a id="container_pull-digest"></a>digest |  The digest of the image to pull.   | String | optional | "" |
-| <a id="container_pull-docker_client_config"></a>docker_client_config |  Specifies a custom directory to look for the docker client configuration.<br><br>            Don't use this directly.             Instead, specify the docker configuration directory using a custom docker toolchain configuration.             Look for the <code>client_config</code> attribute in <code>docker_toolchain_configure</code>             [here](https://github.com/bazelbuild/rules_docker#setup) for details.             See [here](https://github.com/bazelbuild/rules_docker#container_pull-custom-client-configuration)             for an example on how to use container_pull after configuring the docker toolchain<br><br>            When left unspecified (ie not set explicitly or set by the docker toolchain),             docker will use the directory specified via the <code>DOCKER_CONFIG</code> environment variable.<br><br>            If <code>DOCKER_CONFIG</code> isn't set, docker falls back to <code>$HOME/.docker</code>.   | String | optional | "" |
+| <a id="container_pull-docker_client_config"></a>docker_client_config |  Specifies  a Bazel label of the config.json file.<br><br>            Don't use this directly.             Instead, specify the docker configuration directory using a custom docker toolchain configuration.             Look for the <code>client_config</code> attribute in <code>docker_toolchain_configure</code>             [here](https://github.com/bazelbuild/rules_docker#setup) for details.             See [here](https://github.com/bazelbuild/rules_docker#container_pull-custom-client-configuration)             for an example on how to use container_pull after configuring the docker toolchain<br><br>            When left unspecified (ie not set explicitly or set by the docker toolchain),             docker will use the directory specified via the <code>DOCKER_CONFIG</code> environment variable.<br><br>            If <code>DOCKER_CONFIG</code> isn't set, docker falls back to <code>$HOME/.docker</code>.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="container_pull-import_tags"></a>import_tags |  Tags to be propagated to generated rules.   | List of strings | optional | [] |
 | <a id="container_pull-os"></a>os |  Which os to pull if this image refers to a multi-platform manifest list.   | String | optional | "linux" |
 | <a id="container_pull-os_features"></a>os_features |  Specifies os features when pulling a multi-platform manifest list.   | List of strings | optional | [] |
@@ -200,6 +212,7 @@ please use the bazel startup flag `--loading_phase_threads=1` in your bazel invo
 | <a id="container_pull-repo_mapping"></a>repo_mapping |  A dictionary from local repository name to global repository name. This allows controls over workspace dependency resolution for dependencies of this repository.&lt;p&gt;For example, an entry <code>"@foo": "@bar"</code> declares that, for any time this repository depends on <code>@foo</code> (such as a dependency on <code>@foo//some:target</code>, it should actually resolve that dependency within globally-declared <code>@bar</code> (<code>@bar//some:target</code>).   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | required |  |
 | <a id="container_pull-repository"></a>repository |  The name of the image.   | String | required |  |
 | <a id="container_pull-tag"></a>tag |  The <code>tag</code> of the Docker image to pull from the specified <code>repository</code>.<br><br>        If neither this nor <code>digest</code> is specified, this attribute defaults to <code>latest</code>.         If both are specified, then <code>tag</code> is ignored.<br><br>        Note: For reproducible builds, use of <code>digest</code> is recommended.   | String | optional | "latest" |
+| <a id="container_pull-timeout"></a>timeout |  Timeout in seconds to fetch the image from the registry.<br><br>        This attribute will be overridden by the PULLER_TIMEOUT environment variable, if it is set.   | Integer | optional | 0 |
 
 
 <a id="#container_push"></a>
@@ -229,7 +242,7 @@ container_push(<a href="#container_push-name">name</a>, <a href="#container_push
 | <a id="container_push-repository"></a>repository |  The name of the image.   | String | required |  |
 | <a id="container_push-repository_file"></a>repository_file |  The label of the file with repository value. Overrides 'repository'.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="container_push-skip_unchanged_digest"></a>skip_unchanged_digest |  Only push images if the digest has changed, default to False   | Boolean | optional | False |
-| <a id="container_push-stamp"></a>stamp |  -   | Boolean | optional | False |
+| <a id="container_push-stamp"></a>stamp |  Whether to encode build information into the output. Possible values:<br><br>    - <code>@io_bazel_rules_docker//stamp:always</code>:         Always stamp the build information into the output, even in [--nostamp][stamp] builds.         This setting should be avoided, since it potentially causes cache misses remote caching for         any downstream actions that depend on it.<br><br>    - <code>@io_bazel_rules_docker//stamp:never</code>:         Always replace build information by constant values. This gives good build result caching.<br><br>    - <code>@io_bazel_rules_docker//stamp:use_stamp_flag</code>:         Embedding of build information is controlled by the [--[no]stamp][stamp] flag.         Stamped binaries are not rebuilt unless their dependencies change.<br><br>    [stamp]: https://docs.bazel.build/versions/main/user-manual.html#flag--stamp   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | @io_bazel_rules_docker//stamp:use_stamp_flag |
 | <a id="container_push-tag"></a>tag |  The tag of the image.   | String | optional | "latest" |
 | <a id="container_push-tag_file"></a>tag_file |  The label of the file with tag value. Overrides 'tag'.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="container_push-tag_tpl"></a>tag_tpl |  The script template to use.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | required |  |
@@ -369,7 +382,7 @@ The implicit output targets are:
         layers inside the Docker registry.
 
 This rule references the `@io_bazel_rules_docker//toolchains/docker:toolchain_type`.
-See [How to use the Docker Toolchain](toolchains/docker/readme.md#how-to-use-the-docker-toolchain) for details.
+See [How to use the Docker Toolchain](/toolchains/docker/readme.md#how-to-use-the-docker-toolchain) for details.
 
 
 **PARAMETERS**
@@ -414,6 +427,7 @@ You can write a customized container_image rule by writing something like:
         executable = True,
         outputs = _container.image.outputs,
         implementation = _impl,
+        cfg = _container.image.cfg,
     )
 
 

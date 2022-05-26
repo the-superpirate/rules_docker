@@ -4,14 +4,17 @@
 | :------: |
 [![Build status](https://badge.buildkite.com/693d7892250cfd44beea3cd95573388200935906a28cd3146d.svg?branch=master)](https://buildkite.com/bazel/docker-rules-docker-postsubmit)
 
+Generated API documentation is in the docs folder, or you can browse it online at
+<https://docs.aspect.dev/rules_docker>
+
 ## Basic Rules
 
-* [container_image](#container_image-1) ([example](#container_image))
-* [container_bundle](#container_bundle-1) ([example](#container_bundle))
-* [container_import](#container_import)
-* [container_load](#container_load)
-* [container_pull](#container_pull-1) ([example](#container_pull))
-* [container_push](#container_push-1) ([example](#container_push))
+* [container_image](/docs/container.md#container_image) ([example](#container_image))
+* [container_bundle](/docs/container.md#container_bundle) ([example](#container_bundle))
+* [container_import](/docs/container.md#container_import)
+* [container_load](/docs/container.md#container_load)
+* [container_pull](/docs/container.md#container_pull) ([example](#container_pull))
+* [container_push](/docs/container.md#container_push) ([example](#container_push))
 
 These rules used to be `docker_build`, `docker_push`, etc. and the aliases for
 these (mostly) legacy names still exist largely for backwards-compatibility.  We
@@ -125,10 +128,12 @@ load("@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
 )
 docker_toolchain_configure(
   name = "docker_config",
+  # OPTIONAL: Bazel target for the build_tar tool, must be compatible with build_tar.py
+  build_tar_target="<enter absolute path (i.e., must start with repo name @...//:...) to an executable build_tar target>",
   # OPTIONAL: Path to a directory which has a custom docker client config.json.
   # See https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
   # for more details.
-  client_config="<enter absolute path to your docker config directory here>",
+  client_config="<enter Bazel label to your docker config.json here>",
   # OPTIONAL: Path to the docker binary.
   # Should be set explicitly for remote execution.
   docker_path="<enter absolute path to the docker binary (in the remote exec env) here>",
@@ -203,6 +208,12 @@ like:
 Unable to load package for //:WORKSPACE: BUILD file not found in any of the following directories.
 ```
 
+* rules_docker uses transitions to build your containers using toolchains the correct
+architecture and operating system. If you run into issues with toolchain resolutions,
+you can disable this behaviour, by adding this to your .bazelrc:
+```
+build --@io_bazel_rules_docker//transitions:enable=false
+```
 ## Using with Docker locally.
 
 Suppose you have a `container_image` target `//my/image:helloworld`:
@@ -218,8 +229,20 @@ You can load this into your local Docker client by running:
 `bazel run my/image:helloworld`.
 
 For the `lang_image` targets, this will also **run** the
-container to maximize compatibility with `lang_binary` rules.  You can suppress
-this behavior by passing the single flag: `bazel run :foo -- --norun`
+container using `docker run` to maximize compatibility with `lang_binary` rules.
+
+Arguments to this command are forwarded to docker, meaning the command
+
+```bash
+bazel run my/image:helloworld -- -p 8080:80 -- arg0
+```
+
+performs the following steps:
+* load the `my/image:helloworld` target into your local Docker client
+* start a container using this image where `arg0` is passed to the image entrypoint
+* port forward 8080 on the host to port 80 on the container, as per `docker run` documentation
+
+You can suppress this behavior by passing the single flag: `bazel run :foo -- --norun`
 
 Alternatively, you can build a `docker load` compatible bundle with:
 `bazel build my/image:helloworld.tar`.  This will produce the file:
@@ -253,14 +276,18 @@ to use `container_push` with custom docker authentication credentials.
 
 ## Varying image names
 
-A common request from folks using `container_push` or `container_bundle` is to
+A common request from folks using
+`container_push`, `container_bundle`, or `container_image` is to
 be able to vary the tag that is pushed or embedded.  There are two options
 at present for doing this.
 
 ### Stamping
 
-The first option is to use stamping. Stamping is enabled when a supported
-attribute contains a python format placeholder (e.g. `{BUILD_USER}`).
+The first option is to use stamping.
+Stamping is enabled when bazel is run with `--stamp`.
+This enables replacements in stamp-aware attributes.
+A python format placeholder (e.g. `{BUILD_USER}`)
+is replaced by the value of the corresponding workspace-status variable.
 
 ```python
 # A common pattern when users want to avoid trampling
@@ -272,31 +299,29 @@ container_push(
   # Any of these components may have variables.
   registry = "gcr.io",
   repository = "my-project/my-image",
+  # This will be replaced with the current user when built with --stamp
   tag = "{BUILD_USER}",
 )
 ```
 
+> Rules that are sensitive to stamping can also be forced to stamp or non-stamp mode
+> irrespective of the `--stamp` flag to Bazel. Use the `build_context_data` rule
+> to make a target that provides `StampSettingInfo`, and pass this to the
+> `build_context_data` attribute.
+
 The next natural question is: "Well what variables can I use?"  This
 option consumes the workspace-status variables Bazel defines in
-`stable-status.txt` and `volatile-status.txt`.  These files will appear
-in the target's runfiles:
+`bazel-out/stable-status.txt` and `bazel-out/volatile-status.txt`.
 
-```shell
-$ bazel build //docker/testdata:push_stamp
-...
+> Note that changes to the stable-status file
+> cause a rebuild of the action, while volatile-status does not.
 
-$ cat bazel-bin/docker/testdata/push_stamp.runfiles/io_bazel_rules_docker/stable-status.txt
-BUILD_EMBED_LABEL
-BUILD_HOST bazel
-BUILD_USER mattmoor
+You can add more stamp variables via `--workspace_status_command`,
+see the [bazel docs](https://docs.bazel.build/versions/master/user-manual.html#workspace_status).
+A common example is to provide the current git SHA, with
+`--workspace_status_command="echo STABLE_GIT_SHA $(git rev-parse HEAD)"`
 
-$ cat bazel-bin/docker/testdata/push_stamp.runfiles/io_bazel_rules_docker/volatile-status.txt
-BUILD_TIMESTAMP 1498740967769
-
-```
-
-You can augment these variables via `--workspace_status_command`,
-including through the use of [`.bazelrc`](https://github.com/kubernetes/kubernetes/blob/81ce94ae1d8f5d04058eeb214e9af498afe78ff2/build/root/.bazelrc#L6).
+That flag is typically passed in the `.bazelrc` file, see for example [`.bazelrc` in kubernetes](https://github.com/kubernetes/kubernetes/blob/81ce94ae1d8f5d04058eeb214e9af498afe78ff2/build/root/.bazelrc#L6).
 
 
 ### Make variables
@@ -616,7 +641,7 @@ nodejs_image(
     name = "nodejs_image",
     entry_point = "@your_workspace//path/to:file.js",
     # npm deps will be put into their own layer
-    data = [":file.js", "@npm//some-npm-dep"],    
+    data = [":file.js", "@npm//some-npm-dep"],
     ...
 )
 ```
@@ -1131,13 +1156,12 @@ load("@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
 
 docker_toolchain_configure(
   name = "docker_config",
-  # Replace this with an absolute path to a directory which has a custom docker
-  # client config.json. Note relative paths are not supported.
-  # Docker allows you to specify custom authentication credentials
+  # Replace this with a Bazel label to the config.json file. Note absolute or relative
+  # paths are not supported. Docker allows you to specify custom authentication credentials
   # in the client configuration JSON file.
   # See https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
   # for more details.
-  client_config="/path/to/docker/client/config-dir",
+  client_config="@//path/to/docker:client.json",
 )
 ```
 In `BUILD` file:
@@ -1231,9 +1255,9 @@ load("@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
 # Configure the docker toolchain.
 docker_toolchain_configure(
   name = "docker_config",
-  # Path to the directory which has a custom docker client config.json with
+  # Bazel label to a custom docker client config.json with
   # authentication credentials for registry.gitlab.com (used in this example).
-  client_config="/path/to/docker/client/config",
+  client_config="@//path/to/docker/client:config.json",
 )
 
 # Load the custom version of container_pull created by the docker toolchain

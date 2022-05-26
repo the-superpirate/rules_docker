@@ -22,7 +22,7 @@ construct new images.
 NOTE: `container_pull` now supports authentication using custom docker client configuration.
 See [here](https://github.com/bazelbuild/rules_docker#container_pull-custom-client-configuration) for details.
 
-NOTE: Set `PULLER_TIMEOUT` env variable to change the default 600s timeout.
+NOTE: Set `PULLER_TIMEOUT` env variable to change the default 600s timeout for all container_pull targets.
 
 NOTE: Set `DOCKER_REPO_CACHE` env variable to make the container puller cache downloaded layers at the directory specified as a value to this env variable.
 The caching feature hasn't been thoroughly tested and may be thread unsafe.
@@ -47,8 +47,8 @@ _container_pull_attrs = {
     "digest": attr.string(
         doc = "The digest of the image to pull.",
     ),
-    "docker_client_config": attr.string(
-        doc = """Specifies a custom directory to look for the docker client configuration.
+    "docker_client_config": attr.label(
+        doc = """Specifies  a Bazel label of the config.json file.
 
             Don't use this directly.
             Instead, specify the docker configuration directory using a custom docker toolchain configuration.
@@ -62,6 +62,13 @@ _container_pull_attrs = {
 
             If `DOCKER_CONFIG` isn't set, docker falls back to `$HOME/.docker`.
             """,
+        mandatory = False,
+    ),
+    "cred_helpers": attr.label_list(
+        doc = """Labels to a list of credential helper binaries that are configured in `docker_client_config`.
+
+        More about credential helpers: https://docs.docker.com/engine/reference/commandline/login/#credential-helpers
+        """,
         mandatory = False,
     ),
     "import_tags": attr.string_list(
@@ -123,6 +130,11 @@ _container_pull_attrs = {
         Note: For reproducible builds, use of `digest` is recommended.
         """,
     ),
+    "timeout": attr.int(
+        doc = """Timeout in seconds to fetch the image from the registry.
+
+        This attribute will be overridden by the PULLER_TIMEOUT environment variable, if it is set.""",
+    ),
 }
 
 def _impl(repository_ctx):
@@ -165,8 +177,9 @@ def _impl(repository_ctx):
     ]
 
     # Use the custom docker client config directory if specified.
-    if repository_ctx.attr.docker_client_config != "":
-        args += ["-client-config-dir", "{}".format(repository_ctx.attr.docker_client_config)]
+    docker_client_config = repository_ctx.attr.docker_client_config
+    if docker_client_config:
+        args += ["-client-config-dir", repository_ctx.path(docker_client_config).dirname]
 
     cache_dir = repository_ctx.os.environ.get("DOCKER_REPO_CACHE")
     if cache_dir:
@@ -210,6 +223,17 @@ def _impl(repository_ctx):
             kwargs["timeout"] = int(timeout_in_secs)
         else:
             fail("'%s' is invalid value for PULLER_TIMEOUT. Must be an integer." % (timeout_in_secs))
+    elif repository_ctx.attr.timeout > 0:
+        args.extend(["-timeout", str(repository_ctx.attr.timeout)])
+        kwargs["timeout"] = repository_ctx.attr.timeout
+
+    if repository_ctx.attr.cred_helpers:
+        kwargs["environment"] = {
+            "PATH": "{}:{}".format(
+                ":".join([str(repository_ctx.path(helper).dirname) for helper in repository_ctx.attr.cred_helpers]),
+                repository_ctx.os.environ.get("PATH"),
+            ),
+        }
 
     result = repository_ctx.execute(args, **kwargs)
     if result.return_code:

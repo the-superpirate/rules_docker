@@ -49,7 +49,6 @@ load(
 )
 load("//kotlin:image.bzl", "kt_jvm_image")
 load("//nodejs:image.bzl", "nodejs_image")
-load("//oci:oci.bzl", "oci_push")
 load("//python:image.bzl", "py_image", "py_layer")
 load("//python3:image.bzl", "py3_image")
 load("//scala:image.bzl", "scala_image")
@@ -335,18 +334,19 @@ container_image(
     name = "with_stamped_creation_time",
     base = ":base_with_volume",
     creation_time = "{BUILD_TIMESTAMP}",
-    stamp = True,
+    stamp = "//stamp:always",
 )
 
 container_image(
     name = "with_base_stamped_image",
     base = ":with_stamped_creation_time",
+    stamp = "//stamp:always",
 )
 
 container_image(
     name = "with_default_stamped_creation_time",
     base = ":base_with_volume",
-    stamp = True,
+    stamp = "//stamp:always",
 )
 
 container_image(
@@ -408,7 +408,7 @@ container_image(
     labels = {
         "BUILDER": "{BUILD_USER}",
     },
-    stamp = True,
+    stamp = "//stamp:always",
 )
 
 [genrule(
@@ -466,14 +466,7 @@ docker_push(
     image = ":link_with_files_base",
     registry = "gcr.io",
     repository = "convoy-adapter/bazel-oci-test",
-    tag = "{BUILD_USER}",
-)
-
-oci_push(
-    name = "push_stamp_oci",
-    image = ":link_with_files_base",
-    registry = "gcr.io",
-    repository = "convoy-adapter/bazel-oci-test",
+    stamp = "//stamp:always",
     tag = "{BUILD_USER}",
 )
 
@@ -516,6 +509,7 @@ container_bundle(
         # Pad username so that it is long enough.
         "example.com/aaaaa{BUILD_USER}:stamped": ":with_user",
     },
+    stamp = "//stamp:always",
 )
 
 # Generate a dummy debian package with a test/ directory
@@ -892,6 +886,7 @@ java_image(
 war_image(
     name = "war_image",
     srcs = ["Servlet.java"],
+    env = {"WAR_IMAGE_TEST_KEY": "war_image_test_value"},
     layers = [
         ":java_image_library",
         "@javax_servlet_api//jar:jar",

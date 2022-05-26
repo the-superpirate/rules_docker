@@ -122,7 +122,7 @@ container_pull(
 # These are for package_manager testing.
 http_file(
     name = "bazel_gpg",
-    sha256 = "547ec71b61f94b07909969649d52ee069db9b0c55763d3add366ca7a30fb3f6d",
+    sha256 = "8375bd5de1778a9fbb58a482a7ce9444ab9b1f6bb5fddd3700ae86b3fe0e4d3a",
     urls = ["https://bazel.build/bazel-release.pub.gpg"],
 )
 
@@ -240,9 +240,9 @@ http_archive(
 
 http_archive(
     name = "ubuntu1604",
-    sha256 = "aa772738311761ca9bbd94a507d15e78a81755c885641a5a3523a9b3eecb5516",
-    strip_prefix = "base-images-docker-01267e68a505f32188553a2706bd7096bd9ea6f5/ubuntu1604",
-    urls = ["https://github.com/GoogleContainerTools/base-images-docker/archive/01267e68a505f32188553a2706bd7096bd9ea6f5.tar.gz"],
+    sha256 = "e7e4c84f99df99f2a616d5328c41b5237c57c2550b0bd95a3de3888ad595e724",
+    strip_prefix = "base-images-docker-49320166744d93e4ca7754bc192484f9ce8c1686/ubuntu1604",
+    urls = ["https://github.com/GoogleContainerTools/base-images-docker/archive/49320166744d93e4ca7754bc192484f9ce8c1686.tar.gz"],
 )
 
 http_archive(
@@ -398,6 +398,7 @@ dockerfile_image(
         "ALPINE_version": "3.9",
     },
     dockerfile = "//testdata/dockerfile_build:Dockerfile",
+    target = "test",
     vars = [
         "SOME_VAR",
     ],
@@ -517,18 +518,17 @@ py_library(
     urls = ["https://codeload.github.com/google/oauth2client/tar.gz/v4.0.0"],
 )
 
-# For kotlin image test
 http_archive(
     name = "io_bazel_rules_kotlin",
-    sha256 = "fe32ced5273bcc2f9e41cea65a28a9184a77f3bc30fea8a5c47b3d3bfc801dff",
-    strip_prefix = "rules_kotlin-legacy-1.3.0-rc4",
-    type = "zip",
-    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/legacy-1.3.0-rc4.zip"],
+    sha256 = "12d22a3d9cbcf00f2e2d8f0683ba87d3823cb8c7f6837568dd7e48846e023307",
+    url = "https://github.com/bazelbuild/rules_kotlin/releases/download/v1.5.0/rules_kotlin_release.tgz",
 )
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories", "kt_register_toolchains")
+load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
 
 kotlin_repositories()
+
+load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
 
 kt_register_toolchains()
 
